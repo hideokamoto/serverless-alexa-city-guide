@@ -3,6 +3,14 @@
 ### Based codes
 https://github.com/alexa/skill-sample-nodejs-city-guide
 
+### Setup
+
+```
+$ git clone git@github.com:hideokamoto/serverless-alexa-city-guide.git
+$ cd serverless-alexa-city-guide
+$ npm install
+```
+
 ### Run as local
 
 #### LaunchRequest
