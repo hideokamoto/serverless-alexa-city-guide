@@ -1,5 +1,8 @@
 var Alexa = require('alexa-sdk');
-var http = require('http');
+var http = require('https');
+var WPAPI = require( 'wpapi' );
+const endpoint = 'https://wp-kyoto.net/wp-json'
+const wp = new WPAPI({endpoint})
 if ('undefined' === typeof process.env.DEBUG) {
   console.log(alexa)
   if (undefined === alexa) {
@@ -165,13 +168,19 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
     'getTopFiveIntent': function() {
         output = topFiveIntro;
         var cardTitle = "Top Five Things To See in " + location;
+        let self = this
+        httpGet2(location, function(response) {
 
-        for (var counter = topFive.length - 1; counter >= 0; counter--) {
-            output += " Number " + topFive[counter].number + ": " + topFive[counter].caption + newline;
-        }
-        output += topFiveMoreInfo;
-        this.handler.state = states.TOPFIVE;
-        this.emit(':askWithCard', output, topFiveMoreInfo, cardTitle, output);
+          // Parse the response into a JSON object ready to be formatted.
+          var responseData = JSON.parse(response);
+
+          for (var counter = responseData.length - 1; counter >= 0; counter--) {
+              output += " Number " + counter + " " + responseData[counter].title.rendered
+          }
+          output += topFiveMoreInfo;
+          self.handler.state = states.TOPFIVE;
+          self.emit(':askWithCard', output, topFiveMoreInfo, cardTitle, output);
+        })
     },
     'AMAZON.YesIntent': function() {
         output = HelpMessage;
@@ -220,7 +229,6 @@ var startSearchHandlers = Alexa.CreateStateHandler(states.SEARCHMODE, {
             }
 
             var cardTitle = location + " News";
-
             alexa.emit(':tellWithCard', output, cardTitle, cardContent);
         });
     },
@@ -323,6 +331,31 @@ function httpGet(query, callback) {
     };
 
     var req = http.request(options, (res) => {
+
+        var body = '';
+
+        res.on('data', (d) => {
+            body += d;
+        });
+
+        res.on('end', function() {
+            callback(body);
+        });
+
+    });
+    req.end();
+
+    req.on('error', (e) => {
+        console.error(e);
+    });
+}
+
+function httpGet2(query, callback) {
+    console.log("/n QUERY: " + query);
+
+    url = "https://wp-kyoto.net/wp-json/wp/v2/posts"
+
+    var req = http.request(url, (res) => {
 
         var body = '';
 
